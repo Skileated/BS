@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog - Authentication</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;1,600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/home.css" />
+    <style>
+      .auth-container {
+        max-width: 400px;
+        margin: 100px auto;
+        padding: 20px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+      .auth-switch {
+        margin-top: 15px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <img src="img/logo.png" class="logo" alt="" />
+      <ul class="links-container">
+        <li class="link-item"><a href="/" class="link">home</a></li>
+        <li class="link-item"><a href="/editor" class="link">editor</a></li>
+      </ul>
+    </nav>
+
+    <div class="auth-container">
+      <div id="registerForm" class="auth-form">
+        <h2>Register</h2>
+        <div class="form-group">
+          <input
+            type="text"
+            id="registerUsername"
+            placeholder="Username"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <input type="email" id="registerEmail" placeholder="Email" required />
+        </div>
+        <div class="form-group">
+          <input
+            type="password"
+            id="registerPassword"
+            placeholder="Password"
+            required
+          />
+        </div>
+        <button class="btn dark" onclick="handleRegister()">Register</button>
+        <div class="auth-switch">
+          Already have an account? <a href="#" onclick="toggleForms()">Login</a>
+        </div>
+      </div>
+
+      <div id="loginForm" class="auth-form" style="display: none">
+        <h2>Login</h2>
+        <div class="form-group">
+          <input type="email" id="loginEmail" placeholder="Email" required />
+        </div>
+        <div class="form-group">
+          <input
+            type="password"
+            id="loginPassword"
+            placeholder="Password"
+            required
+          />
+        </div>
+        <button class="btn dark" onclick="handleLogin()">Login</button>
+        <div class="auth-switch">
+          Don't have an account?
+          <a href="#" onclick="toggleForms()">Register</a>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+    <script type="module">
+      import { handleAuth } from "./js/firebase.js";
+
+      window.handleRegister = async () => {
+        const username = document.getElementById("registerUsername").value;
+        const email = document.getElementById("registerEmail").value;
+        const password = document.getElementById("registerPassword").value;
+
+        const result = await handleAuth.register(email, password, username);
+        if (result.success) {
+          alert("Registration successful!");
+          window.location.href = "/";
+        } else {
+          alert(result.error);
+        }
+      };
+
+      window.handleLogin = async () => {
+        const email = document.getElementById("loginEmail").value;
+        const password = document.getElementById("loginPassword").value;
+
+        const result = await handleAuth.login(email, password);
+        if (result.success) {
+          alert("Login successful!");
+          window.location.href = "/";
+        } else {
+          alert(result.error);
+        }
+      };
+
+      window.toggleForms = () => {
+        const registerForm = document.getElementById("registerForm");
+        const loginForm = document.getElementById("loginForm");
+        registerForm.style.display =
+          registerForm.style.display === "none" ? "block" : "none";
+        loginForm.style.display =
+          loginForm.style.display === "none" ? "block" : "none";
+      };
+    </script>
+    <script type="module" src="js/nav.js"></script>
+  </body>
+</html>
