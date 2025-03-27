@@ -8,31 +8,15 @@
 
     <link rel="stylesheet" href="/css/home.css" />
     <link rel="stylesheet" href="/css/editor.css" />
-
-    <!-- Use Firebase CDN for ES modules -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-      import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-      import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-      const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT_ID.appspot.com",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID",
-      };
-
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-
-      // Export app, auth, and db for use in other modules
-      export { app, auth, db };
-    </script>
   </head>
   <body>
+    <nav class="navbar">
+      <ul class="links-container">
+        <li class="link-item"><a href="/" class="link">home</a></li>
+        <li class="link-item"><a href="/editor" class="link">editor</a></li>
+      </ul>
+    </nav>
+
     <div class="banner">
       <input type="file" accept="image/*" id="banner-upload" hidden />
       <label for="banner-upload" class="banner-upload-btn">
@@ -61,8 +45,125 @@
       <label for="image-upload" class="btn grey upload-btn">Upload image</label>
     </div>
 
-    <!-- Add type="module" to allow ES6 imports -->
-    <script type="module" src="/js/firebase.js"></script>
-    <script type="module" src="/js/editor.js"></script>
+    <!-- Replace the existing Firebase SDK scripts with these -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+      import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+      import {
+        getFirestore,
+        collection,
+        addDoc,
+      } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCNX6_6m0eU9yf1v_lOBo-8nWo9yGX_AsM",
+        authDomain: "blog-50ad9.firebaseapp.com",
+        projectId: "blog-50ad9",
+        storageBucket: "blog-50ad9.firebasestorage.app",
+        messagingSenderId: "946160300805",
+        appId: "1:946160300805:web:db63f6034ea5fc95c7bd6c",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Handle publish button click
+      const publishBtn = document.querySelector(".publish-btn");
+      const blogTitleField = document.querySelector(".title");
+      const articleField = document.querySelector(".article");
+      const bannerImage = document.querySelector("#banner-upload");
+      const banner = document.querySelector(".banner");
+      let bannerPath;
+
+      // Banner image upload
+      bannerImage.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+          const response = await fetch("/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) throw new Error("Upload failed");
+
+          bannerPath = await response.json();
+          banner.style.backgroundImage = `url(${bannerPath})`;
+          banner.style.backgroundSize = "cover";
+          banner.style.backgroundPosition = "center";
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Failed to upload image");
+        }
+      });
+
+      // Publish post
+      publishBtn.addEventListener("click", async () => {
+        try {
+          if (!articleField.value.length || !blogTitleField.value.length) {
+            alert("Please fill all fields");
+            return;
+          }
+
+          if (!bannerPath) {
+            bannerPath = "/img/default-banner.jpg";
+          }
+
+          const postData = {
+            title: blogTitleField.value,
+            article: articleField.value,
+            bannerImage: bannerPath,
+            publishedAt: new Date().toISOString(),
+            author: auth.currentUser ? auth.currentUser.uid : "anonymous",
+          };
+
+          const docRef = await addDoc(collection(db, "blogs"), postData);
+
+          if (docRef.id) {
+            alert("Post published successfully!");
+            location.href = `/${docRef.id}`;
+          }
+        } catch (error) {
+          console.error("Error publishing post:", error);
+          alert("Failed to publish post. Please try again.");
+        }
+      });
+
+      // Add image upload handler for the article content
+      const uploadInput = document.querySelector("#image-upload");
+
+      uploadInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+          const response = await fetch("/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) throw new Error("Upload failed");
+
+          const imagePath = await response.json();
+          // Insert the image at cursor position in the article
+          const curPos = articleField.selectionStart;
+          const textBefore = articleField.value.slice(0, curPos);
+          const textAfter = articleField.value.slice(curPos);
+
+          // Add the image in markdown format
+          const imageText = `\n![${file.name}](${imagePath})\n`;
+          articleField.value = textBefore + imageText + textAfter;
+
+          alert("Image uploaded successfully!");
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Failed to upload image");
+        }
+      });
+    </script>
   </body>
 </html>

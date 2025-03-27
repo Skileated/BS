@@ -1,49 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatibility" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blog : </title>
-
-    <link rel="stylesheet" href="css/home.css">
-    <link rel="stylesheet" href="css/editor.css">
-    <link rel="stylesheet" href="css/blog.css">
-
-
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog</title>
+    <link rel="stylesheet" href="/css/home.css" />
+    <link rel="stylesheet" href="/css/blog.css" />
+  </head>
+  <body>
     <nav class="navbar">
-        <img src="img/logo.png" class="logo" alt="">
-        <ul class="links-container">
-            <li class="link-item"><a href="/" class="link">home</a></li>
-            <li class="link-item"><a href="/editor" class="link">editor</a></li>
-
-        </ul>
+      <img src="img/logo.png" class="logo" alt="" />
+      <ul class="links-container">
+        <li class="link-item"><a href="/" class="link">home</a></li>
+        <li class="link-item"><a href="/editor" class="link">editor</a></li>
+      </ul>
     </nav>
 
     <div class="banner"></div>
+
     <div class="blog">
-        <h1 class="title"></h1>
-        <p class="published"><span>published at - </span></p>
-        <div class="article">
-            
-        </div>
+      <h1 class="title"></h1>
+      <p class="published"><span>published at - </span></p>
+      <div class="article"></div>
     </div>
 
     <h1 class="sub-heading"><Read more</h1>
 
-        <!--blog section-->
-        <section class="blogs-section">
-            <!--<div class="blog-card">
-                <img src="img/header.png" class="blog-image" alt=" ">
-                <h1 class="blog-title">Lorem ipsum dolor sit amet consectetur.</h1>
-                <p class="blog-overview">Lorem ipsum dolor sit amet consectetur adipisic.
-                <a href="/" class="btn dark">read</a>
-                </div>-->
-        </section>
+    <!--blog section-->
+    <section class="blogs-section">
+      <!--<div class="blog-card">
+            <img src="img/header.png" class="blog-image" alt=" ">
+            <h1 class="blog-title">Lorem ipsum dolor sit amet consectetur.</h1>
+            <p class="blog-overview">Lorem ipsum dolor sit amet consectetur adipisic.
+            <a href="/" class="btn dark">read</a>
+            </div>-->
+    </section>
 
-    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-firestore.js"></script>
-    <script src="js/firebase.js"></script>
-    <script src="js/blog.js"></script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+      import {
+        getFirestore,
+        doc,
+        getDoc,
+      } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCNX6_6m0eU9yf1v_lOBo-8nWo9yGX_AsM",
+        authDomain: "blog-50ad9.firebaseapp.com",
+        projectId: "blog-50ad9",
+        storageBucket: "blog-50ad9.firebasestorage.app",
+        messagingSenderId: "946160300805",
+        appId: "1:946160300805:web:db63f6034ea5fc95c7bd6c",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // Get blog ID from URL
+      const blogId = decodeURI(location.pathname.split("/").pop());
+
+      const setupBlog = async () => {
+        const docRef = doc(db, "blogs", blogId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+
+          // Set the blog content
+          const banner = document.querySelector(".banner");
+          const titleTag = document.querySelector(".title");
+          const publishedAt = document.querySelector(".published span");
+          const article = document.querySelector(".article");
+
+          banner.style.backgroundImage = `url(${data.bannerImage})`;
+          banner.style.backgroundSize = "cover";
+          banner.style.backgroundPosition = "center";
+
+          titleTag.innerHTML = data.title;
+          publishedAt.innerHTML += new Date(data.publishedAt).toDateString();
+
+          // Convert markdown image syntax to HTML img tags
+          const articleContent = data.article.replace(
+            /!\[(.*?)\]\((.*?)\)/g,
+            '<img src="$2" alt="$1" class="article-image">'
+          );
+          article.innerHTML = articleContent;
+        } else {
+          location.replace("/"); // Redirect to home if blog not found
+        }
+      };
+
+      setupBlog();
+    </script>
+  </body>
+</html>

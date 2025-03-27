@@ -4,8 +4,22 @@ const app = express();
 const port = 3000;
 const multer = require('multer');
 
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, '../public')));
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'public/uploads')
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
+
+// Serve static files
+app.use(express.static('public'));
+app.use('/uploads', express.static('public/uploads'));
 app.use(express.json());
 
 // Routes
@@ -26,18 +40,7 @@ app.get('/:blogId', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/uploads/blog.html'));
 });
 
-// Configure Multer for file uploads
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/uploads');
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
-});
-const upload = multer({ storage: storage });
-
-// Handle image uploads
+// Handle file uploads
 app.post('/upload', upload.single('image'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });

@@ -5,7 +5,7 @@ import handleInteractions from "./interactions.js";
 const blogId = decodeURI(location.pathname.split("/").pop());
 const docRef = doc(db, "blogs", blogId);
 
-getDoc(docRef).then((doc) => {
+const unsubscribe = onSnapshot(docRef, (doc) => {
   if (doc.exists()) {
     setupBlog(doc.data());
   } else {
@@ -82,6 +82,7 @@ const setupBlog = (data) => {
   article.appendChild(commentSection);
 };
 
+// Improved image parsing with error handling
 const addArticle = (ele, data) => {
   data = data.split("\n").filter((item) => item.length);
 
@@ -97,22 +98,13 @@ const addArticle = (ele, data) => {
       let tag = `h${hCount}`;
       ele.innerHTML += `<${tag}>${item.slice(hCount, item.length)}</${tag}>`;
     }
-    // Check for image format
-    else if (item[0] === "!" && item[1] === "[") {
-      let separator;
-      for (let i = 0; i <= item.length; i++) {
-        if (
-          item[i] === "]" &&
-          item[i + 1] === "(" &&
-          item[item.length - 1] === ")"
-        ) {
-          separator = i;
-          break;
-        }
+    // Check for image format using regex
+    else if (item.startsWith('![')) {
+      const imgMatch = item.match(/!\[(.*?)\]\((.*?)\)/);
+      if (imgMatch) {
+        const [_, alt, src] = imgMatch;
+        ele.innerHTML += `<img src="${src}" alt="${alt}" class="article-image">`;
       }
-      let alt = item.slice(2, separator);
-      let src = item.slice(separator + 2, item.length - 1);
-      ele.innerHTML += `<img src="${src}" alt="${alt}" class="article-image">`;
     } else {
       ele.innerHTML += `<p>${item}</p>`;
     }

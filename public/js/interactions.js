@@ -9,6 +9,7 @@ const handleInteractions = {
         const user = auth.currentUser;
         if (!user) {
             alert('Please login to like posts');
+            location.href = '/auth.html';
             return;
         }
 
@@ -28,6 +29,7 @@ const handleInteractions = {
         const user = auth.currentUser;
         if (!user) {
             alert('Please login to comment');
+            location.href = '/auth.html';
             return;
         }
 
@@ -48,4 +50,4 @@ const handleInteractions = {
     }
 };
 
-export default handleInteractions; 
+export default handleInteractions;

@@ -1,14 +1,11 @@
-import { app, db, auth } from './firebase.js';
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { app, auth, db } from './firebase.js';
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import client from './client.js';
 
 const blogTitleField = document.querySelector('.title');
 const articleField = document.querySelector('.article');
-
-// banner
-const banner = document.querySelector('.banner');
 const bannerImage = document.querySelector('#banner-upload');
+const banner = document.querySelector('.banner');
 let bannerPath;
 
 const publishBtn = document.querySelector('.publish-btn');
@@ -16,13 +13,8 @@ const uploadInput = document.querySelector('#image-upload');
 
 bannerImage.addEventListener('change', async () => {
     const [file] = bannerImage.files;
-    if (!file) {
-        alert('Please select an image');
-        return;
-    }
-    
-    if (!file.type.includes("image")) {
-        alert('Please upload an image file');
+    if (!file || !file.type.includes("image")) {
+        alert('Please select a valid image file');
         return;
     }
 
@@ -30,15 +22,16 @@ bannerImage.addEventListener('change', async () => {
     formdata.append('image', file);
     
     try {
-        const data = await client.uploadImage(formdata);
-        bannerPath = data;
-        banner.style.backgroundImage = `url("${bannerPath}")`;
+        const response = await client.uploadImage(formdata);
+        bannerPath = response; // Store the path returned from server
+        // Update banner preview
+        banner.style.backgroundImage = `url(${bannerPath})`;
         banner.style.backgroundSize = 'cover';
         banner.style.backgroundPosition = 'center';
-        alert('Image uploaded successfully!');
+        banner.style.backgroundColor = '#e7e7e7';
     } catch (error) {
-        console.error('Error uploading image:', error);
-        alert('Failed to upload image. Please try again.');
+        console.error('Error uploading banner:', error);
+        alert('Failed to upload banner image');
     }
 });
 
@@ -89,49 +82,31 @@ let months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov",
 publishBtn.addEventListener('click', async () => {
     try {
         if(!articleField.value.length || !blogTitleField.value.length){
-            alert('Please fill in all fields');
-            return;
-        }
-
-        const user = auth.currentUser;
-        if (!user) {
-            alert('Please login to publish a post');
+            alert('Please fill all fields');
             return;
         }
 
         if(!bannerPath){
-            bannerPath = '/img/Blogit.png';
+            bannerPath = '/img/default-banner.jpg'; // Default banner if none uploaded
         }
 
-        // Create post data
-        const postData = {
+        const post = {
             title: blogTitleField.value,
             article: articleField.value,
             bannerImage: bannerPath,
-            authorId: user.uid,
             publishedAt: new Date().toISOString(),
-            categories: [], 
-            tags: [],
-            likes: 0
+            author: auth.currentUser ? auth.currentUser.uid : 'anonymous'
         };
 
-        // Save to Firebase
-        const docRef = await addDoc(collection(db, "blogs"), postData);
+        // Save to Firestore
+        const docRef = await addDoc(collection(db, "blogs"), post);
         
-        // Save to server
-        const serverResponse = await client.createPost({
-            ...postData,
-            id: docRef.id
-        });
-
-        if (serverResponse.success) {
+        if(docRef.id) {
             alert('Post published successfully!');
-            location.href = `/${docRef.id}`;
-        } else {
-            throw new Error('Server failed to save post');
+            location.href = `/${docRef.id}`; // Redirect to the published post
         }
     } catch (error) {
-        console.error("Error publishing post:", error);
+        console.error('Error publishing post:', error);
         alert('Failed to publish post. Please try again.');
     }
 });
